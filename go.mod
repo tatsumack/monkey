@@ -1,1 +1,1 @@
-module github.com/tatsumack/monkey
+module monkey
