@@ -71,3 +71,34 @@ func checkParserErrors(t *testing.T, p *Parser) {
 	}
 	t.FailNow()
 }
+
+func TestReturnStatements(t *testing.T) {
+	input := `
+return 5;
+return 10;
+return 12345;
+`
+	l := lexer.New(input)
+	p := New(l)
+
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+	if program == nil {
+		t.Fatalf("ParseProgram returned nil")
+	}
+
+	if len(program.Statements) != 3 {
+		t.Errorf("len(program.Statements) = %v, want %v", len(program.Statements), 3)
+	}
+
+	for _, stmt:= range program.Statements {
+		returnStmt, ok := stmt.(*ast.ReturnStatement)
+		if !ok {
+			t.Errorf("stmt isn't *ast.ReturnStatement, got=%T", stmt)
+		}
+
+		if returnStmt.TokenLiteral() != "return" {
+			t.Errorf("letStmt.TokenLiteral = %v, want %v", returnStmt.TokenLiteral(), "return")
+		}
+	}
+}
