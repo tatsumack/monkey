@@ -268,7 +268,7 @@ func (ie *IfExpression) String() string {
 // FunctionLiteral
 //====================================
 type FunctionLiteral struct {
-	Token      token.Token // token.INT
+	Token      token.Token
 	Parameters []*Identifier
 	Body       *BlockStatement
 }
@@ -287,9 +287,38 @@ func (fl *FunctionLiteral) String() string {
 
 	out.WriteString(fl.TokenLiteral())
 	out.WriteString("(")
-	out.WriteString(strings.Join(params,","))
+	out.WriteString(strings.Join(params, ","))
 	out.WriteString(")")
 	out.WriteString(fl.Body.String())
+
+	return out.String()
+}
+
+//====================================
+// CallExpression
+//====================================
+type CallExpression struct {
+	Token     token.Token
+	Function  Expression
+	Arguments []Expression
+}
+
+func (ce *CallExpression) expressionNode() {}
+func (ce *CallExpression) TokenLiteral() string {
+	return ce.Token.Literal
+}
+func (ce *CallExpression) String() string {
+	var out bytes.Buffer
+
+	params := []string{}
+	for _, p := range ce.Arguments {
+		params = append(params, p.String())
+	}
+
+	out.WriteString(ce.Function.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(")")
 
 	return out.String()
 }
