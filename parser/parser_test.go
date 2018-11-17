@@ -279,6 +279,47 @@ func TestIfElseExpression(t *testing.T) {
 	}
 }
 
+func TestFunctionLiteralParsing(t *testing.T) {
+	input := `fn(x, y) { x + y; }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("len(program.Statements) = %v, want %v", len(program.Statements), 1)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] isn't *ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	exp, ok := stmt.Expression.(*ast.FunctionLiteral)
+	if !ok {
+		t.Fatalf("exp isn't *ast.FunctionLiteral. got=%T", stmt.Expression)
+	}
+
+	if len(exp.Parameters) != 2 {
+		t.Fatalf("len(params) return %v, want 2", len(exp.Parameters))
+	}
+
+	testLiteralExpression(t, exp.Parameters[0], "x")
+	testLiteralExpression(t, exp.Parameters[1], "y")
+
+	if len(exp.Body.Statements) != 1 {
+		t.Fatalf("len(Body.Statements) return %v, want 1", len(exp.Parameters))
+	}
+
+	body, ok := exp.Body.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("Body.Statements[0] isn't *ast.ExpressionStatement. got=%T", exp.Body.Statements[0])
+	}
+
+	testInfixExpression(t, body.Expression, "x", "+", "y")
+}
+
 func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
 		input    string
@@ -564,4 +605,32 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, ope
 	}
 
 	return true
+}
+
+func TestFunctionalParameterParsing(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{input: "fn() {};", expected: []string{}},
+		{input: "fn(x) {};", expected: []string{"x"}},
+		{input: "fn(x, y, z) {};", expected: []string{"x", "y", "z"}},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		stmt := program.Statements[0].(*ast.ExpressionStatement)
+		function := stmt.Expression.(*ast.FunctionLiteral)
+		if len(function.Parameters) != len(tt.expected) {
+			t.Errorf("len(Parameters) = %v, want %v", len(function.Parameters), len(tt.expected))
+		}
+
+		for i, ident := range tt.expected {
+			testLiteralExpression(t, function.Parameters[i], ident)
+		}
+	}
 }
