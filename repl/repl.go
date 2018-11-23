@@ -23,7 +23,7 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		if line == "q" || line == "quit" {
-			fmt.Printf("quit repl\n")
+			fmt.Printf("quit\n")
 			break
 		}
 
