@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	NULL = &object.Null{}
+	NULL  = &object.Null{}
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
 )
@@ -48,8 +48,10 @@ func nativeBoolToBooleanObject(input bool) *object.Boolean {
 
 func evalPrefixExpression(operator string, right object.Object) object.Object {
 	switch operator {
-	case "!" :
+	case "!":
 		return evalBangOperatorExpression(right)
+	case "-":
+		return evalMinusPrefixOperatorExpression(right)
 	default:
 		return NULL
 	}
@@ -67,3 +69,13 @@ func evalBangOperatorExpression(right object.Object) object.Object {
 		return FALSE
 	}
 }
+
+func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
+	if right.Type() != object.INTEGER_OBJ {
+		return NULL
+	}
+
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
+}
+
