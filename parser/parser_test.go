@@ -65,6 +65,64 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 	return true
 }
 
+func TestVarStatements(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		expectedValue      interface{}
+	}{
+		{"var x = 5", "x", 5},
+		{"var y = true", "y", true},
+		{"var foobar = y", "foobar", "y"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Errorf("len(program.Statements) = %v, want %v", len(program.Statements), 1)
+		}
+
+		stmt := program.Statements[0]
+		if !testVarStatement(t, stmt, tt.expectedIdentifier) {
+			return
+		}
+
+		val := stmt.(*ast.VarStatement).Value
+		if !testLiteralExpression(t, val, tt.expectedValue) {
+			return
+		}
+	}
+}
+
+func testVarStatement(t *testing.T, s ast.Statement, name string) bool {
+	if s.TokenLiteral() != "var" {
+		t.Errorf("s.TokenLiteral = %v, want %v", s.TokenLiteral(), "var")
+		return false
+	}
+
+	varStmt, ok := s.(*ast.VarStatement)
+	if !ok {
+		t.Errorf("s isn't *ast.VarStatement. got=%T", s)
+		return false
+	}
+
+	if varStmt.Name.Value != name {
+		t.Errorf("varStmt.Name.Value = %v, want %v", varStmt.Name.Value, name)
+		return false
+	}
+
+	if varStmt.Name.TokenLiteral() != name {
+		t.Errorf("varStmt.Name.TokenLiteral = %v, want %v", varStmt.Name.TokenLiteral(), name)
+		return false
+	}
+
+	return true
+}
+
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
 	if len(errors) == 0 {
@@ -521,6 +579,14 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"add(a * b[2], b[1], 2 * [1, 2][1])",
 			"add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
 		},
+		{
+			"x = y = 1",
+			"(x = (y = 1))",
+		},
+		{
+			"x = y = z = 1",
+			"(x = (y = (z = 1)))",
+		},
 	}
 
 	for _, tt := range tests {
@@ -871,3 +937,46 @@ func TestParsingHashLiteralWithExpressions(t *testing.T) {
 		testFunc(value)
 	}
 }
+
+func TestAssignExpression(t *testing.T) {
+	tests := []struct {
+		input              string
+		expectedIdentifier string
+		expectedValue      interface{}
+	}{
+		{"x = 5", "x", 5},
+		{"y = true", "y", true},
+		{"foobar = y", "foobar", "y"},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Errorf("len(program.Statements) = %v, want %v", len(program.Statements), 1)
+		}
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] isn't *ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		assign, ok := stmt.Expression.(*ast.AssignExpression)
+		if !ok {
+			t.Fatalf("exp isn't *ast.AssignExpression. got=%T", stmt.Expression)
+		}
+
+		if assign.Name.TokenLiteral() != tt.expectedIdentifier {
+			t.Errorf("letStmt.Name.TokenLiteral = %v, want %v", assign.Name.TokenLiteral(), tt.expectedIdentifier)
+		}
+
+		val := assign.Value
+		if !testLiteralExpression(t, val, tt.expectedValue) {
+			return
+		}
+	}
+}
+

@@ -57,7 +57,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		if isError(val) {
 			return val
 		}
-		env.Set(node.Name.Value, val)
+		env.Set(node.Name.Value, val, false)
+	case *ast.VarStatement:
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val, true)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.FunctionLiteral:
@@ -97,6 +103,20 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return index
 		}
 		return evalIndexExpression(left, index)
+	case *ast.AssignExpression:
+		identVal, ok := env.Get(node.Name.Value)
+		if !ok {
+			return newError("identifier not found: " + node.Name.Value)
+		}
+		if !identVal.IsMutable {
+			return newError("can't assign value to immutable identifier: " + node.Name.Value)
+		}
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val, true)
+		return val
 	}
 
 	return nil
@@ -271,7 +291,7 @@ func isError(obj object.Object) bool {
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object {
 	if val, ok := env.Get(node.Value); ok {
-		return val
+		return val.Obj
 	}
 	if builtin, ok := builtins[node.Value]; ok {
 		return builtin
@@ -310,7 +330,7 @@ func extendedFunctionEnv(fn *object.Function, args []object.Object) *object.Envi
 	env := object.NewEnclosedEnvironment(fn.Env)
 
 	for paramIdx, param := range fn.Parameters {
-		env.Set(param.Value, args[paramIdx])
+		env.Set(param.Value, args[paramIdx], true)
 	}
 
 	return env
