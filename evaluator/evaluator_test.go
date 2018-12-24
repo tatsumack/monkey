@@ -519,3 +519,47 @@ func TestHashIndexExpressions(t *testing.T) {
 	}
 
 }
+
+func TestAssignExpressions(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{
+			`let x = 5; x = x + 1; x;`,
+			6,
+		},
+		{
+			`let x = 5; x = x + 1; x = x + 1; x;`,
+			7,
+		},
+		{
+			`let x = "hoge"; x = x + "fuga";`,
+			"hogefuga",
+		},
+		{
+			`let x = 5; let y = x = 7; y;`,
+			7,
+		},
+		{
+			`let x = 1; let y = 2; let z = x = y = 3; z;`,
+			3,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		switch expected := tt.expected.(type) {
+		case int:
+			testIntegerObject(t, evaluated, int64(expected))
+		case string:
+			ret , ok := evaluated.(*object.String)
+			if !ok {
+				t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
+			}
+			if ret.Value != expected {
+				t.Errorf("ret is %q, want=%q", ret.Value, expected)
+			}
+		}
+	}
+}

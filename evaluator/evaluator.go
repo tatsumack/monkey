@@ -97,6 +97,17 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return index
 		}
 		return evalIndexExpression(left, index)
+	case *ast.AssignExpression:
+		ident := evalIdentifier(node.Name, env)
+		if isError(ident) {
+			return ident
+		}
+		val := Eval(node.Value, env)
+		if isError(val) {
+			return val
+		}
+		env.Set(node.Name.Value, val)
+		return val
 	}
 
 	return nil
@@ -389,3 +400,4 @@ func evalHashLiteral(node *ast.HashLiteral, env *object.Environment) object.Obje
 	return &object.Hash{Pairs: pairs}
 
 }
+
