@@ -526,23 +526,23 @@ func TestAssignExpressions(t *testing.T) {
 		expected interface{}
 	}{
 		{
-			`let x = 5; x = x + 1; x;`,
+			`var x = 5; x = x + 1; x;`,
 			6,
 		},
 		{
-			`let x = 5; x = x + 1; x = x + 1; x;`,
+			`var x = 5; x = x + 1; x = x + 1; x;`,
 			7,
 		},
 		{
-			`let x = "hoge"; x = x + "fuga";`,
+			`var x = "hoge"; x = x + "fuga";`,
 			"hogefuga",
 		},
 		{
-			`let x = 5; let y = x = 7; y;`,
+			`var x = 5; var y = x = 7; y;`,
 			7,
 		},
 		{
-			`let x = 1; let y = 2; let z = x = y = 3; z;`,
+			`var x = 1; var y = 2; var z = x = y = 3; z;`,
 			3,
 		},
 	}
