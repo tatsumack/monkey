@@ -117,6 +117,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseVarStatement()
 	case token.RETURN:
 		return p.parseReturnStatement()
+	case token.FOR:
+		return p.parseForStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -183,6 +185,38 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	return stmt
 }
+
+func (p *Parser) parseForStatement() *ast.ForStatement {
+	stmt := &ast.ForStatement{Token: p.curToken}
+
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+
+	stmt.InitialStatement = p.parseStatement()
+
+	p.nextToken()
+
+	stmt.Condition = p.parseExpression(LOWEST)
+	if !p.expectPeek(token.SEMICOLON) {
+		fmt.Println(";")
+		return nil
+	}
+	p.nextToken()
+
+	stmt.PostStatement = p.parseStatement()
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+	}
+	p.nextToken()
+
+	stmt.Block = p.parseBlockStatement()
+
+	return stmt
+}
+
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}

@@ -460,7 +460,7 @@ func (hl *HashLiteral) String() string {
 
 	var pairs []string
 	for key, value := range hl.Pairs {
-		pairs = append(pairs, key.String() + ":" + value.String())
+		pairs = append(pairs, key.String()+":"+value.String())
 	}
 
 	out.WriteString("{")
@@ -470,4 +470,33 @@ func (hl *HashLiteral) String() string {
 	return out.String()
 }
 
+//====================================
+// ForStatement
+//====================================
+type ForStatement struct {
+	Token            token.Token
+	InitialStatement Statement
+	Condition        Expression
+	PostStatement    Statement
+	Block            *BlockStatement
+}
 
+func (fs *ForStatement) statementNode() {}
+func (fs *ForStatement) TokenLiteral() string {
+	return fs.Token.Literal
+}
+func (fs *ForStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(fs.TokenLiteral() + " (")
+	out.WriteString(fs.InitialStatement.String())
+	out.WriteString(" ")
+	out.WriteString(fs.Condition.String())
+	out.WriteString("; ")
+	out.WriteString(fs.PostStatement.String())
+	out.WriteString(") { ")
+	out.WriteString(fs.Block.String())
+	out.WriteString(" }")
+
+	return out.String()
+}

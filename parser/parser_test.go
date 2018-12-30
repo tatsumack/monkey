@@ -611,7 +611,6 @@ func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
 
 	if integ.Value != value {
 		t.Errorf("integ.Value is %v, want %v", integ.Value, value)
-		return false
 	}
 
 	if integ.TokenLiteral() != fmt.Sprintf("%d", value) {
@@ -910,14 +909,14 @@ func TestParsingHashLiteralWithExpressions(t *testing.T) {
 		t.Fatalf("len(hash.Pairs) not 3. got=%d", len(hash.Pairs))
 	}
 
-	tests := map[string] func(expression ast.Expression) {
-		"one" : func(e ast.Expression) {
+	tests := map[string]func(expression ast.Expression){
+		"one": func(e ast.Expression) {
 			testInfixExpression(t, e, 0, "+", 1)
 		},
-		"two" : func(e ast.Expression) {
+		"two": func(e ast.Expression) {
 			testInfixExpression(t, e, 10, "-", 8)
 		},
-		"three" : func(e ast.Expression) {
+		"three": func(e ast.Expression) {
 			testInfixExpression(t, e, 15, "/", 5)
 		},
 	}
@@ -980,3 +979,51 @@ func TestAssignExpression(t *testing.T) {
 	}
 }
 
+func TestForStatement(t *testing.T) {
+	input := `for (var i = 0; i < 10; i = i + 1) { puts(i); }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("len(program.Statements) = %v, want %v", len(program.Statements), 1)
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ForStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] isn't *ast.ForStatement. got=%T", program.Statements[0])
+	}
+
+	initStmt, ok := stmt.InitialStatement.(*ast.VarStatement)
+	if !ok {
+		t.Fatalf("initStmt isn't *ast.VarStatement. got=%T", stmt.InitialStatement)
+	}
+
+	if !testLiteralExpression(t, initStmt.Value, 0) {
+		return
+	}
+
+	if !testInfixExpression(t, stmt.Condition, "i", "<", 10) {
+		return
+	}
+
+	postStmt, ok := stmt.PostStatement.(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("postStmt isn't *ast.ExpressionStatement. got=%T", stmt.PostStatement)
+	}
+
+	postExp, ok := postStmt.Expression.(*ast.AssignExpression)
+	if !ok {
+		t.Fatalf("postStmt isn't *ast.AssignExpression. got=%T", postStmt.Expression)
+	}
+
+	if !testInfixExpression(t, postExp.Value, "i", "+", 1) {
+		return
+	}
+
+	if len(stmt.Block.Statements) != 1 {
+		t.Fatalf("len(stmt.Block.Statements) = %v, want %v", len(stmt.Block.Statements), 1)
+	}
+}
