@@ -200,7 +200,6 @@ func (p *Parser) parseForStatement() *ast.ForStatement {
 
 	stmt.Condition = p.parseExpression(LOWEST)
 	if !p.expectPeek(token.SEMICOLON) {
-		fmt.Println(";")
 		return nil
 	}
 	p.nextToken()
