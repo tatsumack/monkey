@@ -32,6 +32,10 @@ if (5 < 10) {
 "foo bar"
 [1, 2];
 {"foo" : "bar"}
+
+for (var i = 0; i < 10; i = i+1) {
+	puts(i);
+}
 `
 
 	tests := []struct {
@@ -142,20 +146,48 @@ if (5 < 10) {
 		{token.STRING, "foo bar"},
 
 		// [1, 2]
-		{ token.LBRACKET, "["},
-		{ token.INT, "1"},
-		{ token.COMMA, ","},
-		{ token.INT, "2"},
-		{ token.RBRACKET, "]"},
+		{token.LBRACKET, "["},
+		{token.INT, "1"},
+		{token.COMMA, ","},
+		{token.INT, "2"},
+		{token.RBRACKET, "]"},
 		{token.SEMICOLON, ";"},
 
 
 		// {"foo": "bar"}
-		{ token.LBRACE, "{"},
-		{ token.STRING, "foo"},
-		{ token.COLON, ":"},
-		{ token.STRING, "bar"},
-		{ token.RBRACE, "}"},
+		{token.LBRACE, "{"},
+		{token.STRING, "foo"},
+		{token.COLON, ":"},
+		{token.STRING, "bar"},
+		{token.RBRACE, "}"},
+
+		// for (var i = 0; i < 10; i = i+1) {
+		//	puts(i)
+		// }
+		{token.FOR, "for"},
+		{token.LPAREN, "("},
+		{token.VAR, "var"},
+		{token.IDENT, "i"},
+		{token.ASSIGN, "="},
+		{token.INT, "0"},
+		{token.SEMICOLON, ";"},
+		{token.IDENT, "i"},
+		{token.LT, "<"},
+		{token.INT, "10"},
+		{token.SEMICOLON, ";"},
+		{token.IDENT, "i"},
+		{token.ASSIGN, "="},
+		{token.IDENT, "i"},
+		{token.PLUS, "+"},
+		{token.INT, "1"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.IDENT, "puts"},
+		{token.LPAREN, "("},
+		{token.IDENT, "i"},
+		{token.RPAREN, ")"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
 
 		{token.EOF, ""},
 	}

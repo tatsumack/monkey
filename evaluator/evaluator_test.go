@@ -553,7 +553,7 @@ func TestAssignExpressions(t *testing.T) {
 		case int:
 			testIntegerObject(t, evaluated, int64(expected))
 		case string:
-			ret , ok := evaluated.(*object.String)
+			ret, ok := evaluated.(*object.String)
 			if !ok {
 				t.Fatalf("object is not String. got=%T (%+v)", evaluated, evaluated)
 			}
@@ -561,5 +561,20 @@ func TestAssignExpressions(t *testing.T) {
 				t.Errorf("ret is %q, want=%q", ret.Value, expected)
 			}
 		}
+	}
+}
+
+func TestForStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"var a = 5; for (var i = 0; i < 2; i = i + 1) { a = a + 5 } a;", 15},
+		{"var a = 0; for (var i = 0; i < 10; i = i + 1) { a = a + 5 } a;", 50},
+		{"var a = 3; for (; false;) { a = a + 5 } a;", 3},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }

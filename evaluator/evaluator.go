@@ -46,6 +46,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalBlockStatements(node, env)
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
+	case *ast.ForStatement:
+		return evalForStatement(node, env)
 	case *ast.ReturnStatement:
 		val := Eval(node.ReturnValue, env)
 		if isError(val) {
@@ -152,7 +154,6 @@ func evalBlockStatements(block *ast.BlockStatement, env *object.Environment) obj
 			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
 				return result
 			}
-
 		}
 	}
 
@@ -267,6 +268,38 @@ func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Obje
 		return NULL
 	}
 }
+
+func evalForStatement(stmt *ast.ForStatement, env *object.Environment) object.Object {
+	initStmt := Eval(stmt.InitialStatement, env)
+	if isError(initStmt) {
+		return initStmt
+	}
+
+	var result object.Object
+
+	for {
+		condition := Eval(stmt.Condition, env)
+		if isError(condition) {
+			return condition
+		}
+		if !isTruthy(condition) {
+			break
+		}
+
+		result = Eval(stmt.Block, env)
+		if isError(result) || isReturn(result) {
+			return result
+		}
+
+		postStmt := Eval(stmt.PostStatement, env)
+		if isError(postStmt) {
+			return postStmt
+		}
+	}
+
+	return result
+}
+
 func isTruthy(obj object.Object) bool {
 	switch obj {
 	case NULL:
@@ -285,6 +318,13 @@ func newError(format string, a ...interface{}) *object.Error {
 func isError(obj object.Object) bool {
 	if obj != nil {
 		return obj.Type() == object.ERROR_OBJ
+	}
+	return false
+}
+
+func isReturn(obj object.Object) bool {
+	if obj != nil {
+		return obj.Type() == object.RETURN_VALUE_OBJ
 	}
 	return false
 }
